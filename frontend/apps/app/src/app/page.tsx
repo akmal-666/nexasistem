@@ -4,3 +4,4 @@ export default function HomePage() {
   useEffect(() => { window.location.href = '/login' }, [])
   return null
 }
+// v2
