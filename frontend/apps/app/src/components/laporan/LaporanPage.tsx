@@ -3,9 +3,9 @@ import { useEffect, useState } from 'react'
 import { formatRp, apiFetch } from '@/lib/utils'
 
 const PRESETS = [
-  {{ label: 'Hari ini', days: 0 }},
-  {{ label: '7 hari', days: 6 }},
-  {{ label: '30 hari', days: 29 }},
+  { label: 'Hari ini', days: 0 },
+  { label: '7 hari', days: 6 },
+  { label: '30 hari', days: 29 },
 ]
 
 function getDate(daysAgo: number): string {{
