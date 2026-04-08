@@ -1,6 +1,6 @@
 'use client'
-import {{ useEffect, useState }} from 'react'
-import {{ formatRp, apiFetch }} from '@/lib/utils'
+import { useEffect, useState } from 'react'
+import { formatRp, apiFetch } from '@/lib/utils'
 
 const PRESETS = [
   {{ label: 'Hari ini', days: 0 }},

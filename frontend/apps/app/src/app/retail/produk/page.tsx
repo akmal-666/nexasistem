@@ -1,6 +1,6 @@
 'use client'
-import {{ useEffect, useState }} from 'react'
-import {{ formatRp, apiFetch }} from '@/lib/utils'
+import { useEffect, useState } from 'react'
+import { formatRp, apiFetch } from '@/lib/utils'
 import toast from 'react-hot-toast'
 
 export default function ProdukPage() {{
