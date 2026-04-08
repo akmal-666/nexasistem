@@ -1,3 +1,4 @@
+// v2
 // frontend/apps/web/src/app/page.tsx
 // Landing page - SSG (static, cepat di Cloudflare Pages)
 import Link from 'next/link'
