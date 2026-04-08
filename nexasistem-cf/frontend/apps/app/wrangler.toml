@@ -1,0 +1,9 @@
+name = "nexasistem-app"
+main = ".open-next/worker.js"
+compatibility_date = "2024-09-23"
+compatibility_flags = ["nodejs_compat"]
+pages_build_output_dir = ".open-next/assets"
+
+[vars]
+NEXT_PUBLIC_API_URL = "https://api.nexasistem.com"
+NEXT_PUBLIC_APP_URL = "https://app.nexasistem.com"

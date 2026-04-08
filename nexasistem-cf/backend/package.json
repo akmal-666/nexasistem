@@ -1,0 +1,25 @@
+{
+  "name": "backend",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "wrangler dev --port 8787",
+    "deploy": "wrangler deploy",
+    "build": "wrangler deploy --dry-run",
+    "db:migrate:master": "wrangler d1 execute nexasistem-master --file=../packages/db/schema/master.sql",
+    "db:migrate:tenant": "wrangler d1 execute nexasistem-tenant-$SLUG --file=../packages/db/schema/tenant.sql",
+    "db:seed:master": "wrangler d1 execute nexasistem-master --file=./src/seeds/master.sql",
+    "type-check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@nexasistem/auth": "*",
+    "@nexasistem/db": "*",
+    "@nexasistem/shared": "*",
+    "hono": "^4.4.0"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20240620.0",
+    "typescript": "^5.4.5",
+    "wrangler": "^3.60.0"
+  }
+}
