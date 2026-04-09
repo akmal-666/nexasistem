@@ -15,12 +15,15 @@ export default function LoginPage() {
     try {
       const res = await fetch(`${API_URL}/api/auth/login`, {
         method: 'POST',
-        credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(form),
       })
       const data = await res.json() as any
       if (!data.ok) throw new Error(data.error)
+      // Simpan token dan data user di localStorage
+      localStorage.setItem('nx_token', data.token)
+      localStorage.setItem('nx_user', JSON.stringify(data.user))
+      localStorage.setItem('nx_tenant', JSON.stringify(data.tenant))
       window.location.href = '/dashboard'
     } catch (err: any) {
       toast.error(err.message || 'Login gagal')
@@ -48,7 +51,7 @@ export default function LoginPage() {
                 placeholder="warung-pak-budi"
                 value={form.slug}
                 onChange={e => setForm(p => ({ ...p, slug: e.target.value.toLowerCase().trim() }))}
-                required
+                required autoFocus
               />
             </div>
             <div>
@@ -73,11 +76,8 @@ export default function LoginPage() {
                 required
               />
             </div>
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-50"
-            >
+            <button type="submit" disabled={loading}
+              className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-50">
               {loading ? 'Memuat...' : 'Masuk'}
             </button>
           </form>
