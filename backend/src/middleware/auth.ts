@@ -61,3 +61,11 @@ export async function adminAuth(c: Context<{ Bindings: Env }>, next: Next) {
     return c.json({ ok: false, error: 'Token expired atau tidak valid' }, 401)
   }
 }
+
+export async function superadminOnly(c: Context<{ Bindings: Env }>, next: Next) {
+  const role = c.get('adminRole')
+  if (role !== 'superadmin') {
+    return c.json({ ok: false, error: 'Hanya superadmin yang bisa mengakses' }, 403)
+  }
+  await next()
+}
