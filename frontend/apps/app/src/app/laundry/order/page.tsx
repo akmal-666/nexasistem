@@ -76,7 +76,7 @@ export default function LaundryOrderPage() {
                     </div>
                     <div style={{ fontSize: 12, color: 'var(--text-3)' }}>{o.customer_phone || '–'}{o.notes ? ' · ' + o.notes : ''}</div>
                   </div>
-                  <div style={{ display: 'flex', align: 'center', gap: 10, flexShrink: 0 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
                     <div style={{ textAlign: 'right' }}>
                       <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-1)' }}>{formatRp(o.total)}</div>
                       <span style={{ background: s.bg, color: s.color, fontSize: 11.5, fontWeight: 600, padding: '2px 8px', borderRadius: 99 }}>{s.label}</span>
