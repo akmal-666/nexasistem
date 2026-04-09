@@ -43,7 +43,8 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 export default function DashboardPage() {
   const tenant = getTenant()
   const module = tenant?.business_type || 'fnb'
-  const moduleLabel = { fnb:'FnB', retail:'Retail', klinik:'Klinik', laundry:'Laundry', apotek:'Apotek', salon:'Salon', properti:'Properti' }[module] || 'Bisnis'
+  const moduleLabelMap: Record<string, string> = { fnb:'FnB', retail:'Retail', klinik:'Klinik', laundry:'Laundry', apotek:'Apotek', salon:'Salon', properti:'Properti' }
+  const moduleLabel = moduleLabelMap[module] || 'Bisnis'
 
   const [periodIdx, setPeriodIdx] = useState(0)
   const [stats, setStats] = useState<any>(null)
