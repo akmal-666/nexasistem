@@ -1,8 +1,0 @@
-name = "nexasistem-web"
-pages_build_output_dir = "out"
-compatibility_date = "2024-09-23"
-compatibility_flags = ["nodejs_compat"]
-
-[vars]
-NEXT_PUBLIC_API_URL = "https://nexasistem-api.bukhoriakmalrtc02.workers.dev"
-NEXT_PUBLIC_APP_URL = "https://app.nexasistem.com"
