@@ -43,7 +43,7 @@ export default function KlinikKasirPage() {
   }
 
   if (result) return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+    <div style={{minHeight:"100vh",background:"var(--bg)",display:"flex",alignItems:"center",justifyContent:"center",padding:24}}>
       <div className="bg-white rounded-xl p-8 text-center shadow-sm border border-gray-100 max-w-sm w-full">
         <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4 text-3xl">✓</div>
         <h2 className="text-xl font-bold mb-1">Pembayaran Berhasil</h2>

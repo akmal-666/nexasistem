@@ -46,7 +46,7 @@ export default function RetailKasirPage() {
   }
 
   if (result) return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+    <div style={{minHeight:"100vh",background:"var(--bg)",display:"flex",alignItems:"center",justifyContent:"center",padding:24}}>
       <div className="bg-white rounded-xl p-8 text-center shadow-sm border border-gray-100 max-w-sm w-full">
         <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4 text-3xl">✓</div>
         <h2 className="text-xl font-bold mb-1">Transaksi Berhasil</h2>
@@ -92,9 +92,9 @@ export default function RetailKasirPage() {
                 <div className="text-xs text-indigo-600">{formatRp(item.price)}</div>
               </div>
               <div className="flex items-center gap-1">
-                <button onClick={() => setCart(p => p.map(i => i.id === item.id ? { ...i, qty: Math.max(0, i.qty - 1) } : i).filter(i => i.qty > 0))} className="w-7 h-7 rounded-lg border border-gray-200 text-sm font-bold hover:bg-gray-50">-</button>
+                <button onClick={() => setCart(p => p.map(i => i.id === item.id ? { ...i, qty: Math.max(0, i.qty - 1) } : i).filter(i => i.qty > 0))} className="btn btn-ghost btn-sm" style={{width:28,height:28,padding:0,fontSize:16}}>-</button>
                 <span className="w-6 text-center text-sm font-medium">{item.qty}</span>
-                <button onClick={() => addToCart(item)} className="w-7 h-7 rounded-lg border border-gray-200 text-sm font-bold hover:bg-gray-50">+</button>
+                <button onClick={() => addToCart(item)} className="btn btn-ghost btn-sm" style={{width:28,height:28,padding:0,fontSize:16}}>+</button>
               </div>
             </div>
           ))}
