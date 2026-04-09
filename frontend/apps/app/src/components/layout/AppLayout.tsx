@@ -45,6 +45,14 @@ function Ic({ n, s = 16, c = '' }: { n: string; s?: number; c?: string }) {
 
 // ─── Nav config ────────────────────────────────────────────────
 const NAV = [
+  { id: 'customers', label: 'Customer', icon: 'users',
+    children: [
+      { href: '/customers', label: 'Semua Customer', icon: 'users' },
+    ]},
+  { id: 'suppliers', label: 'Supplier', icon: 'box',
+    children: [
+      { href: '/suppliers', label: 'Supplier & Pembelian', icon: 'layers' },
+    ]},
   { id: 'fnb', label: 'FnB', icon: 'fnb',
     children: [
       { href: '/fnb/kasir', label: 'Kasir', icon: 'cart' },
