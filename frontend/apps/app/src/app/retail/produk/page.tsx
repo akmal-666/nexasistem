@@ -1,6 +1,6 @@
 'use client'
-import AppLayout from '@/components/layout/AppLayout'
 import { useEffect, useState } from 'react'
+import AppLayout from '@/components/layout/AppLayout'
 import { formatRp, apiFetch } from '@/lib/utils'
 
 export default function ProdukPage() {
@@ -9,60 +9,41 @@ export default function ProdukPage() {
   const [q, setQ] = useState('')
 
   useEffect(() => {
-    apiFetch('/api/products?module=retail&limit=100')
+    apiFetch('/api/products?module=retail&limit=200')
       .then(d => setProducts(d.products || []))
+      .catch(() => {})
       .finally(() => setLoading(false))
   }, [])
 
   const filtered = products.filter(p => !q || p.name.toLowerCase().includes(q.toLowerCase()))
 
   return (
-    <AppLayout title="Produk Retail" subtitle="Daftar produk toko">
-      <div>
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-xl font-bold text-gray-900">Produk Retail</h1>
-            <p className="text-sm text-gray-500">{filtered.length} produk</p>
-          </div>
+    <AppLayout title="Produk Retail">
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+        <div style={{ display: 'flex', gap: 10 }}>
+          <input className="form-input" placeholder="Cari..." value={q} onChange={e => setQ(e.target.value)} style={{ flex: 1 }} />
+          <button className="btn btn-primary btn-sm">+ Tambah</button>
         </div>
-        <input
-          className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
-          placeholder="Cari produk..." value={q} onChange={e => setQ(e.target.value)} />
-        {loading ? (
-          <div className="text-center py-12 text-gray-400">Memuat...</div>
-        ) : (
-          <div className="bg-white rounded-xl border border-gray-100">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-gray-50">
-                  <th className="px-5 py-3 text-left text-xs text-gray-500 font-medium">Produk</th>
-                  <th className="px-5 py-3 text-left text-xs text-gray-500 font-medium">Harga</th>
-                  <th className="px-5 py-3 text-left text-xs text-gray-500 font-medium">Stok</th>
-                  <th className="px-5 py-3 text-left text-xs text-gray-500 font-medium">Kategori</th>
-                </tr>
-              </thead>
+        <div className="card">
+          <div className="table-wrap">
+            <table className="table">
+              <thead><tr><th>Nama</th><th>Kategori</th><th>Harga</th><th>Stok</th><th>Status</th></tr></thead>
               <tbody>
-                {filtered.length === 0 ? (
-                  <tr><td colSpan={4} className="text-center py-12 text-gray-400">Belum ada produk</td></tr>
-                ) : filtered.map((p: any) => (
-                  <tr key={p.id} className="border-b border-gray-50 hover:bg-gray-50">
-                    <td className="px-5 py-3">
-                      <div className="font-medium text-gray-900">{p.name}</div>
-                      {p.sku && <div className="text-xs text-gray-400">SKU: {p.sku}</div>}
-                    </td>
-                    <td className="px-5 py-3 font-medium text-indigo-600">{formatRp(p.price)}</td>
-                    <td className="px-5 py-3">
-                      <span className={`font-medium ${p.stock <= p.min_stock ? 'text-red-600' : 'text-gray-900'}`}>
-                        {p.stock} {p.unit}
-                      </span>
-                    </td>
-                    <td className="px-5 py-3 text-gray-500">{p.category_name || '-'}</td>
+                {loading ? [...Array(5)].map((_,i) => <tr key={i}><td colSpan={5}><div className="skeleton" style={{height:18,borderRadius:4}} /></td></tr>)
+                : filtered.length === 0 ? <tr><td colSpan={5}><div className="empty"><div className="empty-icon">📦</div><div className="empty-desc">Belum ada produk</div></div></td></tr>
+                : filtered.map((p: any) => (
+                  <tr key={p.id}>
+                    <td style={{fontWeight:600}}>{p.name}</td>
+                    <td style={{color:'var(--text-3)'}}>{p.category_name || '–'}</td>
+                    <td style={{fontWeight:700,color:'var(--accent)'}}>{formatRp(p.price)}</td>
+                    <td style={{color:p.stock<=p.min_stock?'#EF4444':'var(--text-1)'}}>{p.stock} {p.unit}</td>
+                    <td><span className={`badge ${p.is_active?'badge-green':'badge-gray'}`}>{p.is_active?'Aktif':'Nonaktif'}</span></td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
-        )}
+        </div>
       </div>
     </AppLayout>
   )
