@@ -1,4 +1,4 @@
-# v2.2
+# trigger deploy
 # backend/wrangler.toml
 name = "nexasistem-api"
 main = "src/index.ts"
