@@ -1,4 +1,4 @@
-# v2.1
+# v2.2
 # backend/wrangler.toml
 name = "nexasistem-api"
 main = "src/index.ts"
