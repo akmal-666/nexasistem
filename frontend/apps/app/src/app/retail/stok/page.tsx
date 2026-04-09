@@ -1,70 +1,89 @@
 'use client'
-import AppLayout from '@/components/layout/AppLayout'
 import { useEffect, useState } from 'react'
+import AppLayout from '@/components/layout/AppLayout'
 import { formatRp, apiFetch } from '@/lib/utils'
 
 export default function RetailStokPage() {
   const [products, setProducts] = useState<any[]>([])
   const [summary, setSummary] = useState<any>({})
   const [loading, setLoading] = useState(true)
-  const [filter, setFilter] = useState('')
+  const [filter, setFilter] = useState('all')
+  const [q, setQ] = useState('')
 
   useEffect(() => {
-    apiFetch('/api/laporan?type=stock&module=retail').then(d => {
-      setProducts(d.products || [])
-      setSummary(d.summary || {})
-    }).finally(() => setLoading(false))
+    apiFetch('/api/laporan?type=stock&module=retail')
+      .then(d => { setProducts(d.products || []); setSummary(d.summary || {}) })
+      .catch(() => {})
+      .finally(() => setLoading(false))
   }, [])
 
-  const filtered = products.filter(p => filter === 'low' ? p.stock <= p.min_stock : true)
+  const filtered = products.filter(p => {
+    const matchQ = !q || p.name.toLowerCase().includes(q.toLowerCase())
+    const matchFilter = filter === 'all' || (filter === 'low' && p.stock <= p.min_stock) || (filter === 'out' && p.stock <= 0)
+    return matchQ && matchFilter
+  })
 
   return (
-    <AppLayout title="Manajemen Stok" subtitle="Monitor stok produk">
-      <div>
-        <div>
-          <h1 className="text-xl font-bold text-gray-900">Manajemen Stok</h1>
-          <p className="text-sm text-gray-500">{summary.total_products || 0} produk</p>
-        </div>
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+    <AppLayout title="Manajemen Stok" subtitle="Monitor stok dan nilai inventaris">
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 10 }}>
           {[
-            { label: 'Total Produk', value: summary.total_products || 0 },
-            { label: 'Stok Menipis', value: summary.low_stock || 0 },
-            { label: 'Nilai Stok', value: formatRp(summary.total_stock_value || 0) },
-            { label: 'Normal', value: (summary.total_products || 0) - (summary.low_stock || 0) },
+            { label: 'Total Produk', value: summary.total_products ?? 0, color: 'var(--accent)' },
+            { label: 'Stok Normal',  value: (summary.total_products ?? 0) - (summary.low_stock ?? 0), color: '#10B981' },
+            { label: 'Stok Menipis', value: summary.low_stock ?? 0, color: '#F59E0B' },
+            { label: 'Nilai Stok',   value: formatRp(summary.total_stock_value ?? 0), color: 'var(--text-1)' },
           ].map(s => (
-            <div key={s.label} className="bg-white rounded-xl border border-gray-100 p-4">
-              <div className="text-xs text-gray-500 mb-1">{s.label}</div>
-              <div className="text-2xl font-bold text-gray-900">{s.value}</div>
+            <div key={s.label} className="stat" style={{ padding: '14px 16px' }}>
+              <div className="stat-label">{s.label}</div>
+              <div className="stat-value" style={{ fontSize: s.label === 'Nilai Stok' ? 18 : 26, color: s.color }}>{s.value}</div>
             </div>
           ))}
         </div>
-        <div className="flex gap-2">
-          {[{ v: '', l: 'Semua' }, { v: 'low', l: 'Stok Menipis' }].map(f => (
-            <button key={f.v} onClick={() => setFilter(f.v)}
-              className={`px-3 py-1.5 text-sm rounded-lg border font-medium ${filter === f.v ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white border-gray-200 text-gray-600'}`}>
-              {f.l}
-            </button>
-          ))}
+
+        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
+          <input className="form-input" placeholder="Cari produk..." value={q}
+            onChange={e => setQ(e.target.value)} style={{ flex: 1, minWidth: 200 }} />
+          <div style={{ display: 'flex', gap: 6 }}>
+            {[{ v: 'all', l: 'Semua' }, { v: 'low', l: 'Menipis' }, { v: 'out', l: 'Habis' }].map(f => (
+              <button key={f.v} onClick={() => setFilter(f.v)}
+                className={`btn btn-sm ${filter === f.v ? 'btn-primary' : 'btn-secondary'}`}>{f.l}</button>
+            ))}
+          </div>
         </div>
-        {loading ? <div className="text-center py-12 text-gray-400">Memuat...</div> : (
-          <div className="bg-white rounded-xl border border-gray-100">
-            <table className="w-full text-sm">
-              <thead><tr className="border-b border-gray-50">
-                <th className="px-5 py-3 text-left text-xs text-gray-500 font-medium">Produk</th>
-                <th className="px-5 py-3 text-left text-xs text-gray-500 font-medium">Stok</th>
-                <th className="px-5 py-3 text-left text-xs text-gray-500 font-medium">Min. Stok</th>
-                <th className="px-5 py-3 text-left text-xs text-gray-500 font-medium">Nilai</th>
-                <th className="px-5 py-3 text-left text-xs text-gray-500 font-medium">Status</th>
-              </tr></thead>
+
+        <div className="card">
+          <div className="table-wrap">
+            <table className="table">
+              <thead>
+                <tr>
+                  <th>Produk</th>
+                  <th>SKU</th>
+                  <th>Stok</th>
+                  <th>Min. Stok</th>
+                  <th>Nilai</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
               <tbody>
-                {filtered.map((p: any) => (
-                  <tr key={p.id} className="border-b border-gray-50 hover:bg-gray-50">
-                    <td className="px-5 py-3 font-medium">{p.name}</td>
-                    <td className={`px-5 py-3 font-medium ${p.stock <= 0 ? 'text-red-600' : p.stock <= p.min_stock ? 'text-yellow-600' : 'text-gray-900'}`}>{p.stock} {p.unit}</td>
-                    <td className="px-5 py-3 text-gray-400">{p.min_stock}</td>
-                    <td className="px-5 py-3">{formatRp(p.stock_value || 0)}</td>
-                    <td className="px-5 py-3">
-                      <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${p.stock <= 0 ? 'bg-red-100 text-red-700' : p.stock <= p.min_stock ? 'bg-yellow-100 text-yellow-700' : 'bg-green-100 text-green-700'}`}>
+                {loading ? (
+                  [...Array(5)].map((_, i) => (
+                    <tr key={i}><td colSpan={6}><div className="skeleton" style={{ height: 18, borderRadius: 4 }} /></td></tr>
+                  ))
+                ) : filtered.length === 0 ? (
+                  <tr><td colSpan={6}>
+                    <div className="empty"><div className="empty-icon">📦</div><div className="empty-desc">Tidak ada produk</div></div>
+                  </td></tr>
+                ) : filtered.map((p: any) => (
+                  <tr key={p.id}>
+                    <td style={{ fontWeight: 600 }}>{p.name}</td>
+                    <td style={{ fontFamily: 'monospace', fontSize: 12, color: 'var(--text-3)' }}>{p.sku || '–'}</td>
+                    <td style={{ fontWeight: 700, color: p.stock <= 0 ? '#EF4444' : p.stock <= p.min_stock ? '#F59E0B' : 'var(--text-1)' }}>
+                      {p.stock} {p.unit}
+                    </td>
+                    <td style={{ color: 'var(--text-3)' }}>{p.min_stock}</td>
+                    <td style={{ fontWeight: 600 }}>{formatRp(p.stock_value || 0)}</td>
+                    <td>
+                      <span className={`badge ${p.stock <= 0 ? 'badge-red' : p.stock <= p.min_stock ? 'badge-yellow' : 'badge-green'}`}>
                         {p.stock <= 0 ? 'Habis' : p.stock <= p.min_stock ? 'Menipis' : 'Normal'}
                       </span>
                     </td>
@@ -73,7 +92,7 @@ export default function RetailStokPage() {
               </tbody>
             </table>
           </div>
-        )}
+        </div>
       </div>
     </AppLayout>
   )
