@@ -102,10 +102,11 @@ export default function DashboardPage() {
     return []
   })()
 
-  const STAT_CARDS = [
+  interface StatCard { label: string; value: string; change?: string; color: string }
+  const STAT_CARDS: StatCard[] = [
     { label: 'Total Revenue', value: formatRp(stats?.net_revenue ?? 0), change: '+12.5%', color: 'var(--accent)' },
     { label: 'Total Order', value: String(stats?.total_transactions ?? 0), change: '+8.3%', color: '#2DD4BF' },
-    { label: 'Order Selesai', value: String(stats?.done_count ?? 0), change: '', color: '#10B981' },
+    { label: 'Order Selesai', value: String(stats?.done_count ?? 0), color: '#10B981' },
     ...extraStats,
   ]
 
