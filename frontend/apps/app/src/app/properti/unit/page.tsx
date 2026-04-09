@@ -1,73 +1,84 @@
 'use client'
-import AppLayout from '@/components/layout/AppLayout'
 import { useEffect, useState } from 'react'
+import AppLayout from '@/components/layout/AppLayout'
 import { formatRp, apiFetch } from '@/lib/utils'
-import toast from 'react-hot-toast'
 
-const STATUS_CFG: Record<string, { label: string; bg: string }> = {
-  available:   { label: 'Tersedia',  bg: 'bg-green-50 border-green-200' },
-  occupied:    { label: 'Dihuni',    bg: 'bg-blue-50 border-blue-200' },
-  maintenance: { label: 'Perbaikan', bg: 'bg-yellow-50 border-yellow-200' },
+const STATUS_CFG: Record<string, { label: string; color: string; bg: string; border: string }> = {
+  available:   { label: 'Tersedia',  color: '#10B981', bg: '#F0FDF4', border: '#A7F3D0' },
+  occupied:    { label: 'Dihuni',    color: '#3B82F6', bg: '#EFF6FF', border: '#BFDBFE' },
+  maintenance: { label: 'Perbaikan', color: '#F59E0B', bg: '#FFFBEB', border: '#FDE68A' },
 }
 
 export default function PropertiUnitPage() {
   const [data, setData] = useState<any>({ units: [], summary: {} })
   const [loading, setLoading] = useState(true)
+  const [filter, setFilter] = useState('all')
 
-  const fetchData = () => apiFetch('/api/modules/properti?action=units').then(setData).finally(() => setLoading(false))
+  useEffect(() => {
+    apiFetch('/api/modules/properti?action=units')
+      .then(setData).catch(() => {}).finally(() => setLoading(false))
+  }, [])
 
-  useEffect(() => { fetchData() }, [])
+  const filtered = filter === 'all' ? data.units : data.units.filter((u: any) => u.status === filter)
 
   return (
-    <AppLayout title="Unit & Kamar" subtitle="Manajemen unit properti">
-      <div>
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-xl font-bold text-gray-900">Unit & Kamar</h1>
-            <p className="text-sm text-gray-500">{data.summary.total || 0} unit · {data.summary.occupied || 0} dihuni · {data.summary.available || 0} tersedia</p>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+    <AppLayout title="Unit & Kamar" subtitle="Manajemen unit properti"
+      actions={<button className="btn btn-primary btn-sm">+ Tambah Unit</button>}
+    >
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+        {/* Stats */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 10 }}>
           {[
-            { label: 'Total Unit', value: data.summary.total || 0 },
-            { label: 'Dihuni', value: data.summary.occupied || 0 },
-            { label: 'Tersedia', value: data.summary.available || 0 },
-            { label: 'Tingkat Hunian', value: data.summary.total ? `${Math.round((data.summary.occupied / data.summary.total) * 100)}%` : '0%' },
+            { label: 'Total Unit', value: data.summary.total ?? 0, color: 'var(--accent)' },
+            { label: 'Dihuni', value: data.summary.occupied ?? 0, color: '#3B82F6' },
+            { label: 'Tersedia', value: data.summary.available ?? 0, color: '#10B981' },
+            { label: 'Tingkat Hunian', value: data.summary.total ? Math.round((data.summary.occupied / data.summary.total) * 100) + '%' : '0%', color: '#F59E0B' },
           ].map(s => (
-            <div key={s.label} className="bg-white rounded-xl border border-gray-100 p-4">
-              <div className="text-xs text-gray-500 mb-1">{s.label}</div>
-              <div className="text-2xl font-bold text-gray-900">{s.value}</div>
+            <div key={s.label} className="stat" style={{ padding: '14px 16px' }}>
+              <div className="stat-label">{s.label}</div>
+              <div className="stat-value" style={{ fontSize: 24, color: s.color }}>{s.value}</div>
             </div>
           ))}
         </div>
 
-        {loading ? <div className="text-center py-12 text-gray-400">Memuat...</div> : (
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {data.units.map((u: any) => {
-              const cfg = STATUS_CFG[u.status] || STATUS_CFG.available
+        {/* Filter */}
+        <div style={{ display: 'flex', gap: 6 }}>
+          {[{ v: 'all', l: 'Semua' }, { v: 'available', l: 'Tersedia' }, { v: 'occupied', l: 'Dihuni' }, { v: 'maintenance', l: 'Perbaikan' }].map(f => (
+            <button key={f.v} onClick={() => setFilter(f.v)}
+              className={`btn btn-sm ${filter === f.v ? 'btn-primary' : 'btn-secondary'}`}>{f.l}</button>
+          ))}
+        </div>
+
+        {/* Units */}
+        {loading ? (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px,1fr))', gap: 10 }}>
+            {[...Array(6)].map((_, i) => <div key={i} className="skeleton" style={{ height: 150, borderRadius: 12 }} />)}
+          </div>
+        ) : (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px,1fr))', gap: 10 }}>
+            {filtered.map((u: any) => {
+              const s = STATUS_CFG[u.status] || STATUS_CFG.available
               return (
-                <div key={u.id} className={`rounded-xl border-2 p-5 ${cfg.bg}`}>
-                  <div className="flex items-start justify-between mb-3">
+                <div key={u.id} style={{
+                  background: s.bg, border: `1.5px solid ${s.border}`,
+                  borderRadius: 14, padding: '16px',
+                }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
                     <div>
-                      <div className="font-bold text-gray-900">{u.name}</div>
-                      <div className="text-xs text-gray-500 capitalize">{u.type}{u.floor ? ` · Lt.${u.floor}` : ''}{u.size_m2 ? ` · ${u.size_m2}m²` : ''}</div>
+                      <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-1)' }}>{u.name}</div>
+                      <div style={{ fontSize: 11.5, color: 'var(--text-3)', textTransform: 'capitalize', marginTop: 1 }}>
+                        {u.type}{u.floor ? ` · Lt.${u.floor}` : ''}{u.size_m2 ? ` · ${u.size_m2}m²` : ''}
+                      </div>
                     </div>
-                    <span className="text-xs px-2 py-0.5 bg-white rounded-full text-gray-600 border border-gray-200">{cfg.label}</span>
+                    <span style={{ background: 'white', color: s.color, border: `1px solid ${s.border}`, fontSize: 11, fontWeight: 600, padding: '2px 8px', borderRadius: 99 }}>{s.label}</span>
                   </div>
-                  <div className="text-xl font-bold text-indigo-600 mb-2">{formatRp(u.price)}<span className="text-sm font-normal text-gray-400">/bln</span></div>
+                  <div style={{ fontSize: 18, fontWeight: 800, color: s.color, marginBottom: 8 }}>
+                    {formatRp(u.price)}<span style={{ fontSize: 12, fontWeight: 400, color: 'var(--text-3)' }}>/bln</span>
+                  </div>
                   {u.tenant_name && (
-                    <div className="text-sm bg-white rounded-lg px-3 py-2 border border-gray-100">
-                      <div className="font-medium text-gray-900">{u.tenant_name}</div>
-                      <div className="text-xs text-gray-400">{u.tenant_phone || '-'}</div>
-                    </div>
-                  )}
-                  {u.facilities?.length > 0 && (
-                    <div className="flex flex-wrap gap-1 mt-2">
-                      {u.facilities.slice(0, 3).map((f: string) => (
-                        <span key={f} className="text-xs bg-white px-2 py-0.5 rounded border border-gray-100 text-gray-600">{f}</span>
-                      ))}
-                      {u.facilities.length > 3 && <span className="text-xs text-gray-400">+{u.facilities.length - 3}</span>}
+                    <div style={{ background: 'white', borderRadius: 8, padding: '7px 10px', border: `1px solid ${s.border}` }}>
+                      <div style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--text-1)' }}>{u.tenant_name}</div>
+                      <div style={{ fontSize: 11, color: 'var(--text-3)' }}>{u.tenant_phone || '–'}</div>
                     </div>
                   )}
                 </div>

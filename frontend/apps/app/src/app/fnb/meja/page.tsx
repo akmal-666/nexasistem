@@ -1,14 +1,14 @@
 'use client'
-import AppLayout from '@/components/layout/AppLayout'
 import { useEffect, useState } from 'react'
+import AppLayout from '@/components/layout/AppLayout'
 import { apiFetch } from '@/lib/utils'
 import toast from 'react-hot-toast'
 
-const STATUS_CFG: Record<string, { label: string; bg: string; dot: string }> = {
-  available:  { label: 'Kosong',    bg: 'bg-green-50 border-green-200',   dot: 'bg-green-400' },
-  occupied:   { label: 'Terisi',    bg: 'bg-blue-50 border-blue-200',     dot: 'bg-blue-400' },
-  reserved:   { label: 'Reservasi', bg: 'bg-purple-50 border-purple-200', dot: 'bg-purple-400' },
-  closed:     { label: 'Tutup',     bg: 'bg-gray-50 border-gray-200',     dot: 'bg-gray-300' },
+const STATUS: Record<string, { label: string; bg: string; dot: string; text: string }> = {
+  available:  { label: 'Tersedia',   bg: '#F0FDF4', dot: '#22C55E', text: '#15803D' },
+  occupied:   { label: 'Terisi',     bg: '#EFF6FF', dot: '#3B82F6', text: '#1D4ED8' },
+  reserved:   { label: 'Reservasi',  bg: '#F5F3FF', dot: '#8B5CF6', text: '#6D28D9' },
+  closed:     { label: 'Tutup',      bg: 'var(--bg)', dot: 'var(--text-3)', text: 'var(--text-3)' },
 }
 
 export default function FnbMejaPage() {
@@ -16,62 +16,115 @@ export default function FnbMejaPage() {
   const [loading, setLoading] = useState(true)
   const [newName, setNewName] = useState('')
   const [adding, setAdding] = useState(false)
+  const [filter, setFilter] = useState('all')
 
-  const fetch = () => apiFetch('/api/modules/fnb?action=tables').then(d => setTables(d.tables || [])).finally(() => setLoading(false))
+  const fetchTables = () => {
+    apiFetch('/api/modules/fnb?action=tables')
+      .then(d => setTables(d.tables || []))
+      .catch(() => {})
+      .finally(() => setLoading(false))
+  }
 
-  useEffect(() => { fetch() }, [])
+  useEffect(() => { fetchTables() }, [])
 
   async function addTable(e: React.FormEvent) {
     e.preventDefault()
-    if (!newName) return
+    if (!newName.trim()) return
     setAdding(true)
     try {
-      await apiFetch('/api/modules/fnb', { method: 'POST', body: JSON.stringify({ action: 'add_table', name: newName }) })
+      await apiFetch('/api/modules/fnb', {
+        method: 'POST',
+        body: JSON.stringify({ action: 'add_table', name: newName }),
+      })
       toast.success('Meja ditambahkan')
       setNewName('')
-      fetch()
+      fetchTables()
     } catch (err: any) { toast.error(err.message) }
     finally { setAdding(false) }
   }
 
   async function kosongkan(id: string) {
     try {
-      await apiFetch('/api/modules/fnb', { method: 'POST', body: JSON.stringify({ action: 'update_table_status', table_id: id, status: 'available' }) })
-      fetch()
+      await apiFetch('/api/modules/fnb', {
+        method: 'POST',
+        body: JSON.stringify({ action: 'update_table_status', table_id: id, status: 'available' }),
+      })
+      fetchTables()
     } catch (err: any) { toast.error(err.message) }
   }
 
+  const filtered = filter === 'all' ? tables : tables.filter(t => t.status === filter)
+  const counts = { all: tables.length, available: tables.filter(t => t.status === 'available').length, occupied: tables.filter(t => t.status === 'occupied').length }
+
   return (
-    <AppLayout title="Manajemen Meja" subtitle="Status meja restoran">
-      <div>
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-xl font-bold text-gray-900">Manajemen Meja</h1>
-            <p className="text-sm text-gray-500">{tables.filter(t => t.status === 'occupied').length} terisi · {tables.filter(t => t.status === 'available').length} kosong</p>
-          </div>
-          <a href="/fnb/kasir" className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700">+ Transaksi</a>
+    <AppLayout title="Manajemen Meja" subtitle="Status dan pengelolaan meja restoran"
+      actions={
+        <a href="/fnb/kasir" className="btn btn-primary btn-sm">+ Transaksi Baru</a>
+      }
+    >
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+        {/* Stats */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 10 }}>
+          {[
+            { label: 'Total Meja', value: counts.all, color: 'var(--accent)' },
+            { label: 'Tersedia', value: counts.available, color: '#22C55E' },
+            { label: 'Terisi', value: counts.occupied, color: '#3B82F6' },
+          ].map(s => (
+            <div key={s.label} className="stat" style={{ padding: '14px 16px' }}>
+              <div className="stat-label">{s.label}</div>
+              <div className="stat-value" style={{ fontSize: 28, color: s.color }}>{s.value}</div>
+            </div>
+          ))}
         </div>
 
-        <form onSubmit={addTable} className="flex gap-3">
-          <input className="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            placeholder="Nama meja baru (contoh: Meja 5)" value={newName} onChange={e => setNewName(e.target.value)} />
-          <button type="submit" disabled={adding} className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium disabled:opacity-50">Tambah</button>
-        </form>
+        {/* Add + Filter */}
+        <div className="card" style={{ padding: '14px 18px' }}>
+          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
+            <form onSubmit={addTable} style={{ display: 'flex', gap: 8, flex: 1, minWidth: 240 }}>
+              <input className="form-input" placeholder="Nama meja baru (contoh: Meja 5)"
+                value={newName} onChange={e => setNewName(e.target.value)}
+                style={{ flex: 1 }} />
+              <button type="submit" disabled={adding} className="btn btn-primary">
+                {adding ? '...' : '+ Tambah'}
+              </button>
+            </form>
+            <div style={{ display: 'flex', gap: 6 }}>
+              {[{ v: 'all', l: 'Semua' }, { v: 'available', l: 'Tersedia' }, { v: 'occupied', l: 'Terisi' }].map(f => (
+                <button key={f.v} onClick={() => setFilter(f.v)}
+                  className={`btn btn-sm ${filter === f.v ? 'btn-primary' : 'btn-secondary'}`}>
+                  {f.l}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
 
-        {loading ? <div className="text-center py-12 text-gray-400">Memuat...</div> : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-            {tables.map((t: any) => {
-              const cfg = STATUS_CFG[t.status] || STATUS_CFG.available
+        {/* Tables grid */}
+        {loading ? (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px,1fr))', gap: 10 }}>
+            {[...Array(6)].map((_, i) => <div key={i} className="skeleton" style={{ height: 120, borderRadius: 12 }} />)}
+          </div>
+        ) : filtered.length === 0 ? (
+          <div className="card"><div className="empty"><div className="empty-icon">🍽️</div><div className="empty-title">Belum ada meja</div><div className="empty-desc">Tambah meja di atas</div></div></div>
+        ) : (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px,1fr))', gap: 10 }}>
+            {filtered.map((t: any) => {
+              const s = STATUS[t.status] || STATUS.available
               return (
-                <div key={t.id} className={`rounded-xl border-2 p-4 ${cfg.bg}`}>
-                  <div className="flex items-center justify-between mb-2">
-                    <div className={`w-2.5 h-2.5 rounded-full ${cfg.dot}`} />
-                    <span className="text-xs text-gray-500">{t.capacity}×</span>
+                <div key={t.id} style={{
+                  background: s.bg, border: '1.5px solid var(--border)',
+                  borderRadius: 14, padding: '16px 14px',
+                  transition: 'box-shadow .15s',
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+                    <span style={{ width: 8, height: 8, borderRadius: '50%', background: s.dot, flexShrink: 0 }} />
+                    <span style={{ fontSize: 11, fontWeight: 600, color: s.text }}>{t.capacity} kursi</span>
                   </div>
-                  <div className="font-semibold text-gray-900">{t.name}</div>
-                  <div className="text-xs text-gray-500 mt-0.5">{cfg.label}</div>
+                  <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-1)', marginBottom: 4 }}>{t.name}</div>
+                  <div style={{ fontSize: 11.5, fontWeight: 600, color: s.text, marginBottom: t.status === 'occupied' ? 10 : 0 }}>{s.label}</div>
                   {t.status === 'occupied' && (
-                    <button onClick={() => kosongkan(t.id)} className="mt-3 w-full py-1.5 bg-white border border-gray-200 rounded-lg text-xs text-gray-600 hover:bg-gray-50">
+                    <button onClick={() => kosongkan(t.id)} className="btn btn-sm btn-secondary"
+                      style={{ width: '100%', marginTop: 4, fontSize: 11 }}>
                       Kosongkan
                     </button>
                   )}

@@ -1,20 +1,17 @@
 'use client'
-import AppLayout from '@/components/layout/AppLayout'
 import { useEffect, useState } from 'react'
+import AppLayout from '@/components/layout/AppLayout'
 import { formatRp, apiFetch } from '@/lib/utils'
 import toast from 'react-hot-toast'
 
-const STATUS_LABELS: Record<string, string> = {
-  received: 'Diterima', washing: 'Mencuci', drying: 'Pengeringan',
-  ironing: 'Setrika', folding: 'Melipat', ready: 'Siap', delivered: 'Selesai'
-}
-const STATUS_COLORS: Record<string, string> = {
-  received:'badge-blue', washing:'badge-yellow', drying:'badge-yellow',
-  ironing:'badge-purple', folding:'badge-purple', ready:'badge-green', delivered:'badge-gray'
-}
-const NEXT_STATUS: Record<string, string> = {
-  received:'washing', washing:'drying', drying:'ironing',
-  ironing:'folding', folding:'ready', ready:'delivered'
+const STATUSES: Record<string, { label: string; color: string; bg: string; next: string | null; nextLabel: string }> = {
+  received:   { label: 'Diterima',    color: '#3B82F6', bg: '#DBEAFE', next: 'washing',  nextLabel: 'Mulai Cuci' },
+  washing:    { label: 'Mencuci',     color: '#F59E0B', bg: '#FEF3C7', next: 'drying',   nextLabel: 'Keringkan' },
+  drying:     { label: 'Pengeringan', color: '#F59E0B', bg: '#FEF3C7', next: 'ironing',  nextLabel: 'Setrika' },
+  ironing:    { label: 'Setrika',     color: '#8B5CF6', bg: '#EDE9FE', next: 'folding',  nextLabel: 'Lipat' },
+  folding:    { label: 'Melipat',     color: '#8B5CF6', bg: '#EDE9FE', next: 'ready',    nextLabel: 'Siap Ambil' },
+  ready:      { label: 'Siap',        color: '#10B981', bg: '#D1FAE5', next: 'delivered', nextLabel: 'Selesai' },
+  delivered:  { label: 'Selesai',     color: '#6B7280', bg: '#F3F4F6', next: null,       nextLabel: '' },
 }
 
 export default function LaundryOrderPage() {
@@ -22,67 +19,78 @@ export default function LaundryOrderPage() {
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState('')
 
-  const fetchOrders = () => apiFetch(`/api/modules/laundry?action=orders${filter ? '&status='+filter : ''}`).then(d => setOrders(d.orders || [])).finally(() => setLoading(false))
+  const fetchOrders = () => {
+    setLoading(true)
+    apiFetch(`/api/modules/laundry?action=orders${filter ? '&status=' + filter : ''}`)
+      .then(d => setOrders(d.orders || []))
+      .catch(() => {})
+      .finally(() => setLoading(false))
+  }
 
   useEffect(() => { fetchOrders() }, [filter])
 
   async function updateStatus(id: string, status: string) {
     try {
-      await apiFetch('/api/modules/laundry', { method: 'POST', body: JSON.stringify({ action: 'update_status', laundry_id: id, status }) })
-      toast.success(`Status: ${STATUS_LABELS[status]}`)
+      await apiFetch('/api/modules/laundry', {
+        method: 'POST',
+        body: JSON.stringify({ action: 'update_status', laundry_id: id, status }),
+      })
+      toast.success('Status diperbarui')
       fetchOrders()
     } catch (err: any) { toast.error(err.message) }
   }
 
   return (
-    <AppLayout title="Order Laundry" subtitle="Tracking pesanan laundry">
-      <div>
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-xl font-bold text-gray-900">Order Laundry</h1>
-            <p className="text-sm text-gray-500">{orders.length} order</p>
-          </div>
-          <a href="/laundry/order/baru" className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700">+ Order Baru</a>
-        </div>
-
-        <div className="flex gap-2 flex-wrap">
-          {[{ v: '', l: 'Semua' }, ...Object.entries(STATUS_LABELS).map(([v, l]) => ({ v, l }))].map(s => (
-            <button key={s.v} onClick={() => setFilter(s.v)}
-              className={`px-3 py-1.5 text-xs rounded-lg border font-medium transition-colors ${filter === s.v ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white border-gray-200 text-gray-600'}`}>
-              {s.l}
+    <AppLayout title="Order Laundry" subtitle={`${orders.length} order aktif`}
+      actions={<button className="btn btn-primary btn-sm">+ Order Baru</button>}
+    >
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+        {/* Filter */}
+        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+          <button onClick={() => setFilter('')} className={`btn btn-sm ${filter === '' ? 'btn-primary' : 'btn-secondary'}`}>Semua</button>
+          {Object.entries(STATUSES).map(([v, s]) => (
+            <button key={v} onClick={() => setFilter(v)}
+              className={`btn btn-sm ${filter === v ? 'btn-primary' : 'btn-secondary'}`}>
+              {s.label}
             </button>
           ))}
         </div>
 
-        {loading ? <div className="text-center py-12 text-gray-400">Memuat...</div> : (
-          <div className="space-y-3">
-            {orders.length === 0 ? <div className="text-center py-12 bg-white rounded-xl border border-gray-100 text-gray-400">Tidak ada order</div> : (
-              orders.map((o: any) => (
-                <div key={o.id} className="bg-white rounded-xl border border-gray-100 p-4 flex items-center gap-4 flex-wrap">
-                  <div className="flex-1 min-w-0">
-                    <div className="font-semibold text-gray-900">{o.customer_name || 'Pelanggan'}</div>
-                    <div className="text-sm text-gray-500">{o.order_number} · {o.customer_phone || '-'}</div>
-                    {o.notes && <div className="text-xs text-gray-400 mt-0.5">{o.notes}</div>}
+        {/* Orders */}
+        {loading ? (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {[...Array(4)].map((_, i) => <div key={i} className="skeleton" style={{ height: 76, borderRadius: 12 }} />)}
+          </div>
+        ) : orders.length === 0 ? (
+          <div className="card"><div className="empty"><div className="empty-icon">👕</div><div className="empty-title">Tidak ada order</div><div className="empty-desc">Belum ada order laundry</div></div></div>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {orders.map((o: any) => {
+              const s = STATUSES[o.status] || STATUSES.received
+              return (
+                <div key={o.id} className="card" style={{ padding: '14px 18px', display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
+                  <div style={{ flex: 1, minWidth: 200 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 3 }}>
+                      <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-1)' }}>{o.customer_name || 'Pelanggan'}</span>
+                      <span style={{ fontSize: 11, fontFamily: 'monospace', color: 'var(--text-3)' }}>{o.order_number}</span>
+                    </div>
+                    <div style={{ fontSize: 12, color: 'var(--text-3)' }}>{o.customer_phone || '–'}{o.notes ? ' · ' + o.notes : ''}</div>
                   </div>
-                  <div className="text-right">
-                    <div className="font-bold text-indigo-600">{formatRp(o.total)}</div>
-                    <span className={`inline-block mt-1 px-2 py-0.5 rounded-full text-xs font-medium ${
-                      STATUS_COLORS[o.status] === 'badge-blue' ? 'bg-blue-100 text-blue-700' :
-                      STATUS_COLORS[o.status] === 'badge-yellow' ? 'bg-yellow-100 text-yellow-700' :
-                      STATUS_COLORS[o.status] === 'badge-green' ? 'bg-green-100 text-green-700' :
-                      STATUS_COLORS[o.status] === 'badge-purple' ? 'bg-purple-100 text-purple-700' :
-                      'bg-gray-100 text-gray-600'
-                    }`}>{STATUS_LABELS[o.status]}</span>
+                  <div style={{ display: 'flex', align: 'center', gap: 10, flexShrink: 0 }}>
+                    <div style={{ textAlign: 'right' }}>
+                      <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-1)' }}>{formatRp(o.total)}</div>
+                      <span style={{ background: s.bg, color: s.color, fontSize: 11.5, fontWeight: 600, padding: '2px 8px', borderRadius: 99 }}>{s.label}</span>
+                    </div>
+                    {s.next && (
+                      <button onClick={() => updateStatus(o.id, s.next!)}
+                        className="btn btn-sm" style={{ background: s.color, color: 'white', flexShrink: 0 }}>
+                        {s.nextLabel}
+                      </button>
+                    )}
                   </div>
-                  {NEXT_STATUS[o.status] && (
-                    <button onClick={() => updateStatus(o.id, NEXT_STATUS[o.status])}
-                      className="px-3 py-1.5 bg-indigo-50 text-indigo-700 rounded-lg text-xs font-medium hover:bg-indigo-100">
-                      → {STATUS_LABELS[NEXT_STATUS[o.status]]}
-                    </button>
-                  )}
                 </div>
-              ))
-            )}
+              )
+            })}
           </div>
         )}
       </div>
