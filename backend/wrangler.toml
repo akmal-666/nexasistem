@@ -1,0 +1,43 @@
+# backend/wrangler.toml
+name = "nexasistem-api"
+main = "src/index.ts"
+compatibility_date = "2024-06-20"
+compatibility_flags = ["nodejs_compat"]
+
+routes = [
+  { pattern = "api.nexasistem.com/*", zone_name = "nexasistem.com" },
+  { pattern = "nexasistem.com/api/*", zone_name = "nexasistem.com" },
+]
+
+[[d1_databases]]
+binding = "MASTER_DB"
+database_name = "nexasistem-master"
+database_id = "d10137a5-fefb-4638-8298-3d094fc00dfe"
+
+[[kv_namespaces]]
+binding = "SESSION_KV"
+id = "927cf5982864486b8206162a0ae0ece0"
+preview_id = "248abce0a4c94dde85198ac4ecefd77a"
+
+[[kv_namespaces]]
+binding = "CACHE_KV"
+id = "cfc5c56a3c2b4ac8a31b63b84754d12f"
+preview_id = "3730efe1241049f6bac551cf0a625eba"
+
+[[r2_buckets]]
+binding = "STORAGE"
+bucket_name = "nexasistem-storage"
+
+[vars]
+ENVIRONMENT = "production"
+APP_URL = "https://app.nexasistem.com"
+ADMIN_URL = "https://admin.nexasistem.com"
+WEB_URL = "https://nexasistem.com"
+
+[dev]
+port = 8787
+local_protocol = "http"
+
+[env.staging]
+name = "nexasistem-api-staging"
+vars = { ENVIRONMENT = "staging" }

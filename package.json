@@ -1,0 +1,29 @@
+{
+  "name": "nexasistem",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "frontend/apps/*",
+    "backend",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev:backend": "npm -w backend run dev",
+    "dev:web": "npm -w frontend/apps/web run dev",
+    "dev:app": "npm -w frontend/apps/app run dev",
+    "dev:admin": "npm -w frontend/apps/admin run dev",
+    "build:all": "npm -w packages/shared run build && npm -w packages/db run build && npm -w packages/auth run build && npm -w backend run build && npm -w frontend/apps/web run build && npm -w frontend/apps/app run build && npm -w frontend/apps/admin run build",
+    "db:migrate": "npm -w backend run db:migrate",
+    "db:seed": "npm -w backend run db:seed",
+    "deploy:backend": "npm -w backend run deploy",
+    "deploy:web": "npm -w frontend/apps/web run deploy",
+    "deploy:app": "npm -w frontend/apps/app run deploy",
+    "deploy:admin": "npm -w frontend/apps/admin run deploy",
+    "deploy:all": "npm run deploy:backend && npm run deploy:web && npm run deploy:app && npm run deploy:admin",
+    "type-check": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.5",
+    "wrangler": "^3.60.0"
+  }
+}
